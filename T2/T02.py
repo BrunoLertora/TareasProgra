@@ -1,3 +1,3 @@
-from T02_limpieza import limpieza
+from T02_mapa import Grafo
 
-limpieza()
+grafo = Grafo()

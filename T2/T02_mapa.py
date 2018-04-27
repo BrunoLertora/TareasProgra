@@ -3,10 +3,11 @@ from T02_limpieza import limpieza
 
 
 class Celda(metaclass=ABCMeta):
-    def __init__(self, pos_x, pos_y, coordenada):
+    def __init__(self, pos_x, pos_y, coordenada, dificultad):
         self.pos_x = pos_x
         self.pos_y = pos_y
         self.coordenada = coordenada
+        self.dificultad = dificultad
         self.nodo_izq = None
         self.nodo_der = None
         self.nodo_arriba = None
@@ -15,32 +16,38 @@ class Celda(metaclass=ABCMeta):
         self.nodo_diag_izq2 = None
         self.nodo_diag_der1 = None
         self.nodo_diag_der2 = None
-        self.vecinos = [self.nodo_diag_izq1, self.nodo_izq, self.nodo_diag_izq2, self.nodo_arriba, self.nodo_abajo, self.nodo_diag_der1, self.nodo_der, self.nodo_diag_der2]
+        self.vecinos = [self.nodo_diag_izq1, self.nodo_izq, self.nodo_diag_izq2, self.nodo_arriba, self.nodo_abajo,
+                        self.nodo_diag_der1, self.nodo_der, self.nodo_diag_der2]
 
 
 class Obstaculo(Celda):
-    def __init__(self, pos_x, pos_y, coordenada):
-        super(Obstaculo, self).__init__(pos_x, pos_y, coordenada)
+    def __init__(self, pos_x, pos_y, coordenada, dificultad="X"):
+        super(Obstaculo, self).__init__(pos_x, pos_y, coordenada, dificultad)
 
 
 class Espacio(Celda):
-    def __init__(self, pos_x, pos_y, dificultad, coordenada):
-        super(Espacio, self).__init__(pos_x, pos_y, coordenada)
-        self.dificultad = dificultad
+    def __init__(self, pos_x, pos_y, coordenada, dificultad):
+        super(Espacio, self).__init__(pos_x, pos_y, coordenada, dificultad)
 
 
 class Grafo:
     def __init__(self):
         self.mapa = []
+        self.grafo = {}
+        self.agregar_nodos()
+        self.actualizar_vecinos()
+        self.crear_conecciones()
 
     def agregar_nodos(self):
         limpieza()
         lectura = open('mapa_arreglado.txt', "r", encoding='utf-8')
         datos = []
+        # Guardamos los datos del mapa en una lista
         for linea in lectura:
             linea = linea.replace('\n', "")
             lista = linea.split(',')
             datos.append(lista)
+        # Inicializamos los nodos, ya sean obstaculos o espacicos
         for linea in range(len(datos)):
             self.mapa.append([])
             for vertice in range(len(datos[linea])):
@@ -49,10 +56,11 @@ class Grafo:
                     obstaculo = Obstaculo(vertice, linea, coordenada)
                     self.mapa[linea].append(obstaculo)
                 else:
-                    camino = Espacio(vertice, linea, datos[linea][vertice], coordenada)
+                    camino = Espacio(vertice, linea, coordenada, datos[linea][vertice])
                     self.mapa[linea].append(camino)
 
-    def actualizar_nodos(self):
+    def actualizar_vecinos(self):
+        # Para cada nodo, actualizamos sus 8 vecinos. Primero los verticales u horizontales, y luego los diagonales
         for linea in self.mapa:
             for nodo in linea:
                 x = nodo.pos_x
@@ -72,6 +80,8 @@ class Grafo:
                         nodo.nodo_arriba = self.mapa[y - 1][x]
                     except IndexError:
                         pass
+                nodo.vecinos = [nodo.nodo_diag_izq1, nodo.nodo_izq, nodo.nodo_diag_izq2, nodo.nodo_arriba,
+                                nodo.nodo_abajo, nodo.nodo_diag_der1, nodo.nodo_der, nodo.nodo_diag_der2]
         for linea in self.mapa:
             for nodo in linea:
                 x = nodo.pos_x
@@ -95,44 +105,17 @@ class Grafo:
                     nodo.nodo_diag_der2 = self.mapa[y+1][x+1]
                 except IndexError:
                         pass
+                nodo.vecinos = [nodo.nodo_diag_izq1, nodo.nodo_izq, nodo.nodo_diag_izq2, nodo.nodo_arriba,
+                                nodo.nodo_abajo, nodo.nodo_diag_der1, nodo.nodo_der, nodo.nodo_diag_der2]
 
-
-a = Grafo()
-a.agregar_nodos()
-a.actualizar_nodos()
-for b in a.mapa:
-    for c in b:
-        print(c.pos_x, c.pos_y, c.coordenada)
-        try:
-            print(c.nodo_diag_izq1.coordenada)
-        except:
-            print("No")
-        try:
-            print(c.nodo_izq.coordenada)
-        except:
-            print("No")
-        try:
-            print(c.nodo_diag_izq2.coordenada)
-        except:
-            print("No")
-        try:
-            print(c.nodo_arriba.coordenada)
-        except:
-            print("No")
-        try:
-            print(c.nodo_abajo.coordenada)
-        except:
-            print("No")
-        try:
-            print(c.nodo_diag_der1.coordenada)
-        except:
-            print("No")
-        try:
-            print(c.nodo_der.coordenada)
-        except:
-            print("No")
-        try:
-            print(c.nodo_diag_der2.coordenada)
-        except:
-            print("No")
-        print("\n")
+    # Creamos conecciones en ambos sentidos entre todos los nodos que sean vecinos
+    def crear_conecciones(self):
+        for linea in self.mapa:
+            for nodo in linea:
+                if nodo.dificultad != "X":
+                    self.grafo[nodo.coordenada] = set()
+                    for vecino in nodo.vecinos:
+                        if vecino and vecino.dificultad != "X":
+                            self.grafo[nodo.coordenada].add(vecino)
+                else:
+                    self.grafo[nodo.coordenada] = set()
