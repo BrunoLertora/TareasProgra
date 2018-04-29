@@ -43,9 +43,24 @@ def quitar_letras(lista):
     return list(filter(no_es_letra, lista))
 
 
+# A partir de una expresion que tenga una o mas resta(s) de numeros, se retorna el resultado de esa(s) resta(s)
+def restar(expresion):
+    lista = expresion.split("-")
+    resta = reduce(lambda x, y: int(x) - int(y), lista)
+    return resta
+
+
+# A partir de una expresion de suma(s) y/o resta(s) de numeros, se retorna el resultado de esta(s) operacion(es)
+def evaluar(expresion):
+    lista = expresion.split("+")
+    lista1 = [restar(c) if "-" in c else c for c in lista]
+    suma = reduce(lambda x, y: int(x) + int(y), lista1)
+    return suma
+
+
 # A partir de una lista se devuelve una lista con las operaciones resueltas
 def resolver_operacion(lista):
-    lista2 = [eval(letra) if letra != "X" else letra for letra in lista]
+    lista2 = [evaluar(letra) if letra != "X" else letra for letra in lista]
     return lista2
 
 
