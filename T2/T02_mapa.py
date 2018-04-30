@@ -119,3 +119,35 @@ class Grafo:
                             self.grafo[nodo.coordenada].add(vecino)
                 else:
                     self.grafo[nodo.coordenada] = set()
+    def buscar_vertice(self, coordenada):
+        fila = int(coordenada[1])
+        columna = int(ord(coordenada[0])-65)
+        vertice = self.mapa[columna][fila]
+        return vertice
+
+
+    def obstaculo_cercano(self, coordenada_origen, lista = list(), visitados = set()):
+        vertice = self.buscar_vertice(coordenada_origen)
+        vertices = vertice.vecinos
+        for v in vertices:
+            if v!= None:
+                if isinstance(v, Obstaculo):
+                    print('El obstaculo más cercano tiene coordenada:')
+                    print(v.coordenada)
+                    return v
+
+
+                else:
+                    if v.coordenada not in visitados:
+                        lista.append(v.coordenada)
+        visitados.add(coordenada_origen)
+        if len(lista) > 0:
+            coordenada_origen = lista[0]
+            lista = lista[1:]
+            self.obstaculo_cercano(coordenada_origen, lista, visitados)
+        else:
+            return 'No hay'
+
+
+
+
