@@ -2,6 +2,8 @@ from abc import ABCMeta
 from T02_limpieza import limpieza
 
 
+
+
 class Celda(metaclass=ABCMeta):
     def __init__(self, pos_x, pos_y, coordenada, dificultad):
         self.pos_x = pos_x
@@ -119,3 +121,35 @@ class Grafo:
                             self.grafo[nodo.coordenada].add(vecino)
                 else:
                     self.grafo[nodo.coordenada] = set()
+
+    #
+    def manhattan(self, actual, destino):
+        lista_abierta = [actual]
+        lista_cerrada = []
+
+        while lista_abierta:
+
+        if actual == destino:
+            return
+
+
+
+
+
+
+
+# Calcular distancia Manhattan a partir de dos objetos de la clase Celda
+def distancia_manhattan(nodo_a, nodo_b):
+    return abs(nodo_a.pos_x - nodo_b.pos_x) + abs(nodo_a.pos_y - nodo_b.pos_y)
+
+
+# Calcular distancia euclidiana a partir de dos objetos de la clase Celda
+def distancia_euclidiana(nodo_a, nodo_b):
+    return ((nodo_a.pos_x - nodo_b.pos_x)**2 + (nodo_a.pos_y - nodo_b.pos_y)**2)**(1/2)
+
+def distancia_chebyshev(nodo_a, nodo_b):
+    a = abs(nodo_a.pos_x - nodo_b.pos_x)
+    b = abs(nodo_a.pos_y - nodo_b.pos_y)
+    return max(a,b)
+
+
