@@ -120,23 +120,14 @@ class Grafo:
                 else:
                     self.grafo[nodo.coordenada] = set()
 
-    def manhattan(self, actual, destino):
-        lista_abierta = [actual]
-        lista_cerrada = []
-
-        while lista_abierta:
-            if actual == destino:
-                return actual
-
-
+    # A partir de una coordenada, se retorna el nodo correspondiente
     def buscar_vertice(self, coordenada):
         fila = int(coordenada[1])
         columna = int(ord(coordenada[0])-65)
         vertice = self.mapa[columna][fila]
         return vertice
 
-
-    def obstaculo_cercano(self, coordenada_origen, lista = list(), visitados = set()):
+    def obstaculo_cercano(self, coordenada_origen, lista=list(), visitados=set()):
         vertice = self.buscar_vertice(coordenada_origen)
         vecinos = vertice.vecinos
         for v in vecinos:
@@ -156,6 +147,44 @@ class Grafo:
         else:
             return 'No hay'
 
+    def ruta_corta1(self, coordenada_origen, coordenada_destino, lista=list(), visitados=list()):
+        vertice = self.buscar_vertice(coordenada_origen)
+        vecinos = vertice.vecinos
+        for v in vecinos:
+            if v is not None:
+                if v.coordenada == coordenada_destino:
+                    camino = []
+                    camino.append(coordenada_origen)
+                    camino.append(coordenada_destino)
+                    return camino
+                else:
+                    if v.coordenada not in visitados:
+                        lista.append(v.coordenada)
+        if coordenada_origen not in visitados:
+            visitados.append(coordenada_origen)
+        if len(lista) > 0:
+            coordenada_origen = lista[0]
+            lista = lista[1:]
+            return self.ruta_corta1(coordenada_origen, coordenada_destino, lista, visitados)
+        else:
+            return None
+
+    def ruta_corta(self, coordenada_origen, coordenada_destino):
+        pasos = []
+        camino = self.ruta_corta1(coordenada_origen, coordenada_destino)
+        pasos.append((camino[0], camino[1]))
+        while camino[0] != coordenada_origen:
+            camino = self.ruta_corta1(coordenada_origen, camino[0])
+            if camino is None:
+                print('ERROR')
+                return None
+
+            pasos = [(camino[0], camino[1])] + pasos
+        print('Camino mas corto')
+        for i in pasos:
+            print(i)
+
+
 # Calcular distancia Manhattan a partir de dos objetos de la clase Celda
 def distancia_manhattan(nodo_a, nodo_b):
     return abs(nodo_a.pos_x - nodo_b.pos_x) + abs(nodo_a.pos_y - nodo_b.pos_y)
@@ -170,4 +199,3 @@ def distancia_chebyshev(nodo_a, nodo_b):
     a = abs(nodo_a.pos_x - nodo_b.pos_x)
     b = abs(nodo_a.pos_y - nodo_b.pos_y)
     return max(a, b)
-

@@ -6,3 +6,5 @@ grafo = Grafo()
 #destino = input("Ingrese coordenada de Destino: ")
 
 grafo.obstaculo_cercano("C8")
+
+grafo.ruta_corta("C0", "A4")
