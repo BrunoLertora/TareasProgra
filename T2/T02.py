@@ -2,5 +2,7 @@ from T02_mapa import Grafo
 
 grafo = Grafo()
 
-origen = input("Ingrese coordenada de Origen: ")
-destino = input("Ingrese coordenada de Destino: ")
+#origen = input("Ingrese coordenada de Origen: ")
+#destino = input("Ingrese coordenada de Destino: ")
+
+grafo.obstaculo_cercano("C8")

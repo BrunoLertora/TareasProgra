@@ -2,8 +2,6 @@ from abc import ABCMeta
 from T02_limpieza import limpieza
 
 
-
-
 class Celda(metaclass=ABCMeta):
     def __init__(self, pos_x, pos_y, coordenada, dificultad):
         self.pos_x = pos_x
@@ -122,21 +120,41 @@ class Grafo:
                 else:
                     self.grafo[nodo.coordenada] = set()
 
-    #
     def manhattan(self, actual, destino):
         lista_abierta = [actual]
         lista_cerrada = []
 
         while lista_abierta:
-
-        if actual == destino:
-            return
-
+            if actual == destino:
+                return actual
 
 
+    def buscar_vertice(self, coordenada):
+        fila = int(coordenada[1])
+        columna = int(ord(coordenada[0])-65)
+        vertice = self.mapa[columna][fila]
+        return vertice
 
 
-
+    def obstaculo_cercano(self, coordenada_origen, lista = list(), visitados = set()):
+        vertice = self.buscar_vertice(coordenada_origen)
+        vecinos = vertice.vecinos
+        for v in vecinos:
+            if v is not None:
+                if isinstance(v, Obstaculo):
+                    print('El obstaculo más cercano tiene coordenada:')
+                    print(v.coordenada)
+                    return v
+                else:
+                    if v.coordenada not in visitados:
+                        lista.append(v.coordenada)
+        visitados.add(coordenada_origen)
+        if len(lista) > 0:
+            coordenada_origen = lista[0]
+            lista = lista[1:]
+            self.obstaculo_cercano(coordenada_origen, lista, visitados)
+        else:
+            return 'No hay'
 
 # Calcular distancia Manhattan a partir de dos objetos de la clase Celda
 def distancia_manhattan(nodo_a, nodo_b):
@@ -147,9 +165,9 @@ def distancia_manhattan(nodo_a, nodo_b):
 def distancia_euclidiana(nodo_a, nodo_b):
     return ((nodo_a.pos_x - nodo_b.pos_x)**2 + (nodo_a.pos_y - nodo_b.pos_y)**2)**(1/2)
 
+
 def distancia_chebyshev(nodo_a, nodo_b):
     a = abs(nodo_a.pos_x - nodo_b.pos_x)
     b = abs(nodo_a.pos_y - nodo_b.pos_y)
-    return max(a,b)
-
+    return max(a, b)
 
