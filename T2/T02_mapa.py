@@ -147,21 +147,25 @@ class Grafo:
         else:
             return 'No hay'
 
-    def ruta_corta1(self, coordenada_origen, coordenada_destino, lista=list(), visitados=list()):
+    def ruta_corta1(self, coordenada_origen, coordenada_destino, lista=list(), visitados=set()):
         vertice = self.buscar_vertice(coordenada_origen)
         vecinos = vertice.vecinos
         for v in vecinos:
-            if v is not None:
+            if v is not None and isinstance(v, Espacio):
                 if v.coordenada == coordenada_destino:
                     camino = []
                     camino.append(coordenada_origen)
                     camino.append(coordenada_destino)
                     return camino
                 else:
-                    if v.coordenada not in visitados:
+                    if v.coordenada not in visitados and v.coordenada not in lista:
                         lista.append(v.coordenada)
-        if coordenada_origen not in visitados:
-            visitados.append(coordenada_origen)
+        print('aqui')
+        print(coordenada_origen, coordenada_destino)
+        print(lista)
+        print(visitados)
+
+        visitados.add(coordenada_origen)
         if len(lista) > 0:
             coordenada_origen = lista[0]
             lista = lista[1:]
@@ -170,11 +174,14 @@ class Grafo:
             return None
 
     def ruta_corta(self, coordenada_origen, coordenada_destino):
+        print(coordenada_origen, coordenada_destino)
         pasos = []
-        camino = self.ruta_corta1(coordenada_origen, coordenada_destino)
+        camino = self.ruta_corta2(coordenada_origen, coordenada_destino, list(), set())
+        print(camino)
         pasos.append((camino[0], camino[1]))
+        print(pasos)
         while camino[0] != coordenada_origen:
-            camino = self.ruta_corta1(coordenada_origen, camino[0])
+            camino = self.ruta_corta2(coordenada_origen, camino[0], list(), set())
             if camino is None:
                 print('ERROR')
                 return None
@@ -183,6 +190,107 @@ class Grafo:
         print('Camino mas corto')
         for i in pasos:
             print(i)
+
+    def obstaculo_cercano1(self, coordenada_origen, lista=[], visitados=set()):
+        if len(lista) == 0 and len(visitados) == 0:
+            vertice = self.buscar_vertice(coordenada_origen)
+            vecinos = vertice.vecinos
+            for v in vecinos:
+                if v is not None:
+                    if isinstance(v, Obstaculo):
+                        print('El obstaculo más cercano tiene coordenada:')
+                        print(v.coordenada)
+                        return v
+                    else:
+                        if v.coordenada not in visitados:
+                            lista.append(v.coordenada)
+            visitados.add(vertice.coordenada)
+            if len(lista) > 0:
+                return self.obstaculo_cercano1(coordenada_origen, lista, visitados)
+            else:
+                return None
+
+        elif len(lista) > 0:
+            lista2 = []
+            for coordenada in lista:
+                vertice = self.buscar_vertice(coordenada)
+                vecinos = vertice.vecinos
+                for v in vecinos:
+                    if v is not None and v.coordenada not in visitados:
+                        if isinstance(v, Obstaculo):
+                            print('El obstaculo más cercano tiene coordenada:')
+                            print(v.coordenada)
+                            return v
+                        else:
+                            if v.coordenada not in visitados and v.coordenada not in lista:
+                                lista2.append(v.coordenada)
+                visitados.add(coordenada)
+            if len(lista2) > 0:
+                return self.obstaculo_cercano1(coordenada_origen, lista2, visitados)
+            else:
+                return None
+
+        else:
+            return None
+
+    def ruta_corta2(self, coordenada_origen, coordenada_destino, lista=[], visitados=set()):
+        print(lista, visitados)
+        if len(lista) == 0 and len(visitados) == 0:
+            vertice = self.buscar_vertice(coordenada_origen)
+            vecinos = vertice.vecinos
+            for v in vecinos:
+                if v is not None and isinstance(v, Espacio):
+                    if v.coordenada == coordenada_destino:
+                        return [vertice.coordenada, coordenada_destino]
+                    else:
+                        if v.coordenada not in visitados:
+                            lista.append(v.coordenada)
+            visitados.add(vertice.coordenada)
+            if len(lista) > 0:
+                return self.ruta_corta2(coordenada_origen, coordenada_destino, lista, visitados)
+            else:
+                return None
+
+        elif len(lista) > 0:
+            lista2 = []
+            for coordenada in lista:
+                vertice = self.buscar_vertice(coordenada)
+                vecinos = vertice.vecinos
+                for v in vecinos:
+                    if v is not None and v.coordenada not in visitados and isinstance(v, Espacio):
+                        if v.coordenada == coordenada_destino:
+                            return [vertice.coordenada, coordenada_destino]
+                        else:
+                            if v.coordenada not in visitados and v.coordenada not in lista:
+                                lista2.append(v.coordenada)
+                visitados.add(coordenada)
+            if len(lista2) > 0:
+                return self.ruta_corta2(coordenada_origen,coordenada_destino, lista2, visitados)
+            else:
+                return None
+
+        else:
+            return None
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Calcular distancia Manhattan a partir de dos objetos de la clase Celda
