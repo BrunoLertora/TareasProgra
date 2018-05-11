@@ -2,6 +2,31 @@ from abc import ABCMeta
 from T02_limpieza import limpieza
 
 
+class PriorityQueue:
+    def __init__(self):
+        self.queue = []
+
+    def get(self):
+        print(self.queue)
+        a = self.queue[0]
+        self.queue = self.queue[1:]
+        return a
+    def put(self, cosa):
+        lista = []
+        for item in self.queue:
+            if cosa[0] < item[0]:
+                lista.append(cosa)
+            elif cosa[0] == item[0]:
+                lista.append(item)
+                lista.append(cosa)
+            else:
+                lista.append(item)
+        if cosa not in lista:
+            lista.append(cosa)
+        self.queue = lista
+
+
+
 class Celda(metaclass=ABCMeta):
     def __init__(self, pos_x, pos_y, coordenada, dificultad):
         self.pos_x = pos_x
@@ -140,49 +165,55 @@ class Grafo:
             key.gn = 0
             key.hn = 0
 
-    def camino_minimo(self, modo, actual, destino, lista=[]):
-        nodo_actual = self.buscar_vertice(actual)
-        nodo_destino = self.buscar_vertice(destino)
-        mejor = None
-        contador = 0
-        # Para cada vecino del nodo actual, chequeamos si es el destino buscado. Si lo es, retornamos la lista de nodos
-        # recorridos y el costo de la ruta. Se verifica en esta etapa, ya que un nodo que sea vecino del destino tendrá
-        # que "pagar" por lo menos el costo del nodo destino para llegar a este, y no existirá ninguna forma de menor
-        # costo que ir directamente al destino, sin importar los costos de los otros vecinos
-        for vecino in nodo_actual.vecinos:
-            if vecino == nodo_destino:
-                lista.append(vecino)
-                g = nodo_actual.gn + int(vecino.dificultad)
-                self.reset()
-                return lista, g
-        # Si no hemos llegado al destino, actualizamos los hn según el tipo de distancia que se esté ocupando,
-        # actualizamos gn si es que su valor es menor que su valor mas bajo de las recursiones anteriores,
-        # actualizamos fn y actualizamos el mejor vecino.
-            if isinstance(vecino, Espacio) and vecino not in lista:
-                contador += 1
-                if modo == 1:
-                    vecino.hn = distancia_manhattan(vecino, nodo_destino)
-                elif modo == 2:
-                    vecino.hn = distancia_euclidiana(vecino, nodo_destino)
-                elif modo == 3:
-                    vecino.hn = distancia_chebyshev(vecino, nodo_destino)
-                if vecino.gn > nodo_actual.gn + int(vecino.dificultad) or vecino.gn == 0:
-                    vecino.gn = nodo_actual.gn + int(vecino.dificultad)
-                vecino.fn = vecino.gn + vecino.hn
-                if mejor is None:
-                    mejor = vecino
-                else:
-                    if vecino.fn < mejor.fn:
-                        mejor = vecino
-        # Caso en el que la heuristica hace que no queden nodos vecinos por recorrer, topandose con puros obstaculos
-        # o nodos ya recorridos. En este caso la heuristica no es admisible. Esto se podría "solucionar" implementando
-        # backtracking en el algoritmo y que este busque la mejor solucion admisible (de acorde a la heuristica).
-        if contador == 0:
-            return [], None
-        # Guardamos a que vecino sería mejor moverse segun la heuristica y continuamos buscando el nodo destino desde
-        # este nuevo nodo
-        lista.append(mejor)
-        return self.camino_minimo(modo, mejor.coordenada, destino, lista)
+    def camino_minimo(self, modo, start, goal, actual, frontier = PriorityQueue(), came_from = {}, cost_so_far = {}):
+        if actual is None:
+            frontier.put((0, start))
+            came_from[start] = None
+            cost_so_far[start] = 0
+            self.camino_minimo(modo, start, goal, start, frontier, came_from, cost_so_far)
+        elif actual != goal:
+            for next in actual.vecinos:
+                if isinstance(next, Espacio):
+                    new_cost = int(cost_so_far[actual]) + int(next.dificultad)
+                    if next not in cost_so_far or new_cost < cost_so_far[next]:
+                        cost_so_far[next] = new_cost
+                        priority = new_cost + distancia_manhattan(next, goal)
+                        print('aqui')
+                        print(priority)
+                        print(next)
+                        frontier.put((priority, next))
+                        print(frontier.queue)
+                        print('aqui')
+                        came_from[next] = actual
+
+            try:
+                actual = frontier.get()[1]
+            except:
+                print('no')
+                print(came_from)
+                for i,j in came_from.items():
+                    if i != None and j!= None:
+                        print(i.coordenada, j.coordenada)
+
+                print(cost_so_far)
+                for i,j in cost_so_far.items():
+                    print(i.coordenada,j)
+                return came_from, cost_so_far
+
+            self.camino_minimo(modo, start, goal, actual, frontier, came_from, cost_so_far)
+
+        elif actual == goal:
+            print('no')
+            print(came_from)
+            for i,j in came_from.items():
+                if i != None and j!= None:
+                    print(i.coordenada, j.coordenada)
+
+            print(cost_so_far)
+            for i,j in cost_so_far.items():
+                print(i.coordenada,j)
+            return came_from, cost_so_far
+
 
     def ruta_optima(self):
         print("Ruta óptima considerando costos")
