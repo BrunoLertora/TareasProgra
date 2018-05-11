@@ -7,7 +7,6 @@ class PriorityQueue:
         self.queue = []
 
     def get(self):
-        print(self.queue)
         a = self.queue[0]
         self.queue = self.queue[1:]
         return a
@@ -170,73 +169,97 @@ class Grafo:
             frontier.put((0, start))
             came_from[start] = None
             cost_so_far[start] = 0
-            self.camino_minimo(modo, start, goal, start, frontier, came_from, cost_so_far)
+            output = self.camino_minimo(modo, start, goal, start, frontier, came_from, cost_so_far)
+            return output
         elif actual != goal:
             for next in actual.vecinos:
                 if isinstance(next, Espacio):
                     new_cost = int(cost_so_far[actual]) + int(next.dificultad)
                     if next not in cost_so_far or new_cost < cost_so_far[next]:
                         cost_so_far[next] = new_cost
-                        priority = new_cost + distancia_manhattan(next, goal)
-                        print('aqui')
-                        print(priority)
-                        print(next)
+                        if modo == 1:
+                            priority = new_cost + distancia_manhattan(next, goal)
+                        elif modo == 2:
+                            priority = new_cost + distancia_euclidiana(next, goal)
+                        elif modo == 3:
+                            priority = new_cost + distancia_chebyshev(next, goal)
                         frontier.put((priority, next))
-                        print(frontier.queue)
-                        print('aqui')
                         came_from[next] = actual
 
             try:
                 actual = frontier.get()[1]
             except:
-                print('no')
-                print(came_from)
-                for i,j in came_from.items():
-                    if i != None and j!= None:
-                        print(i.coordenada, j.coordenada)
-
-                print(cost_so_far)
-                for i,j in cost_so_far.items():
-                    print(i.coordenada,j)
                 return came_from, cost_so_far
 
-            self.camino_minimo(modo, start, goal, actual, frontier, came_from, cost_so_far)
+            output = self.camino_minimo(modo, start, goal, actual, frontier, came_from, cost_so_far)
+            return output
 
         elif actual == goal:
-            print('no')
-            print(came_from)
-            for i,j in came_from.items():
-                if i != None and j!= None:
-                    print(i.coordenada, j.coordenada)
-
-            print(cost_so_far)
-            for i,j in cost_so_far.items():
-                print(i.coordenada,j)
-            return came_from, cost_so_far
+            return [came_from, cost_so_far]
 
 
     def ruta_optima(self):
         print("Ruta óptima considerando costos")
         origen = str(input("Ingrese coordenada de Origen: "))
         destino = str(input("Ingrese coordenada de Destino: "))
-        camino1 = self.camino_minimo(1, origen, destino, [self.buscar_vertice(origen)])[0]
-        camino2 = self.camino_minimo(2, origen, destino, [self.buscar_vertice(origen)])[0]
-        camino3 = self.camino_minimo(3, origen, destino, [self.buscar_vertice(origen)])[0]
-        costo1 = self.camino_minimo(1, origen, destino, [self.buscar_vertice(origen)])[1]
-        costo2 = self.camino_minimo(2, origen, destino, [self.buscar_vertice(origen)])[1]
-        costo3 = self.camino_minimo(3, origen, destino, [self.buscar_vertice(origen)])[1]
+        output1 = self.camino_minimo(1,self.buscar_vertice(origen), self.buscar_vertice(destino), None)
+        output2 = self.camino_minimo(1,self.buscar_vertice(origen), self.buscar_vertice(destino), None)
+        output3 = self.camino_minimo(1,self.buscar_vertice(origen), self.buscar_vertice(destino), None)
+        costo1 = output1[1][self.buscar_vertice(destino)]
+        costo2 = output2[1][self.buscar_vertice(destino)]
+        costo3 = output3[1][self.buscar_vertice(destino)]
+        a = destino
+        camino1 = []
+        camino2 = []
+        camino3 = []
+        camino1.append(destino)
+        camino2.append(destino)
+        camino3.append(destino)
+
+
+        a = destino
+        while a:
+            camino1.append(a)
+            try:
+                coordenada = output1[0][self.buscar_vertice(a)].coordenada
+                camino1.append(coordenada)
+                a = output1[0][self.buscar_vertice(coordenada)].coordenada
+            except:
+                break
+        a = destino
+        while a:
+            camino2.append(a)
+            try:
+                coordenada = output2[0][self.buscar_vertice(a)].coordenada
+                camino2.append(coordenada)
+                a = output2[0][self.buscar_vertice(coordenada)].coordenada
+            except:
+                break
+        a = destino
+        while a:
+            camino3.append(a)
+            try:
+                coordenada = output3[0][self.buscar_vertice(a)].coordenada
+                camino3.append(coordenada)
+                a = output3[0][self.buscar_vertice(coordenada)].coordenada
+            except:
+                break
+
+        camino1 = camino1[1:]
+        camino2 = camino2[1:]
+        camino3 = camino3[1:]
         lista1 = []
         if camino1:
             for i in range(len(camino1)-1):
-                lista1.append((camino1[i].coordenada, camino1[i+1].coordenada))
+                lista1.append((camino1[i], camino1[i+1]))
         lista2 = []
         if camino2:
             for i in range(len(camino2)-1):
-                lista2.append((camino2[i].coordenada, camino2[i+1].coordenada))
+                lista2.append((camino2[i], camino2[i+1]))
         lista3 = []
         if camino3:
             for i in range(len(camino3)-1):
-                lista3.append((camino3[i].coordenada, camino3[i+1].coordenada))
+                lista3.append((camino3[i], camino3[i+1]))
         string1 = "Camino Manhattan: "
         string2 = "Camino Euclides: "
         string3 = "Camino Chebyshev: "
