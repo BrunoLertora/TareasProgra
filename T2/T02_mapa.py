@@ -10,6 +10,7 @@ class PriorityQueue:
         a = self.queue[0]
         self.queue = self.queue[1:]
         return a
+
     def put(self, cosa):
         lista = []
         for item in self.queue:
@@ -23,7 +24,6 @@ class PriorityQueue:
         if cosa not in lista:
             lista.append(cosa)
         self.queue = lista
-
 
 
 class Celda(metaclass=ABCMeta):
@@ -164,7 +164,7 @@ class Grafo:
             key.gn = 0
             key.hn = 0
 
-    def camino_minimo(self, modo, start, goal, actual, frontier = PriorityQueue(), came_from = {}, cost_so_far = {}):
+    def camino_minimo(self, modo, start, goal, actual, frontier=PriorityQueue(), came_from={}, cost_so_far={}):
         if actual is None:
             frontier.put((0, start))
             came_from[start] = None
@@ -185,26 +185,22 @@ class Grafo:
                             priority = new_cost + distancia_chebyshev(next, goal)
                         frontier.put((priority, next))
                         came_from[next] = actual
-
             try:
                 actual = frontier.get()[1]
-            except:
+            except IndexError:
                 return came_from, cost_so_far
-
             output = self.camino_minimo(modo, start, goal, actual, frontier, came_from, cost_so_far)
             return output
-
         elif actual == goal:
             return [came_from, cost_so_far]
-
 
     def ruta_optima(self):
         print("Ruta óptima considerando costos")
         origen = str(input("Ingrese coordenada de Origen: "))
         destino = str(input("Ingrese coordenada de Destino: "))
-        output1 = self.camino_minimo(1,self.buscar_vertice(origen), self.buscar_vertice(destino), None)
-        output2 = self.camino_minimo(1,self.buscar_vertice(origen), self.buscar_vertice(destino), None)
-        output3 = self.camino_minimo(1,self.buscar_vertice(origen), self.buscar_vertice(destino), None)
+        output1 = self.camino_minimo(1, self.buscar_vertice(origen), self.buscar_vertice(destino), None)
+        output2 = self.camino_minimo(1, self.buscar_vertice(origen), self.buscar_vertice(destino), None)
+        output3 = self.camino_minimo(1, self.buscar_vertice(origen), self.buscar_vertice(destino), None)
         costo1 = output1[1][self.buscar_vertice(destino)]
         costo2 = output2[1][self.buscar_vertice(destino)]
         costo3 = output3[1][self.buscar_vertice(destino)]
@@ -215,16 +211,13 @@ class Grafo:
         camino1.append(destino)
         camino2.append(destino)
         camino3.append(destino)
-
-
-        a = destino
         while a:
             camino1.append(a)
             try:
                 coordenada = output1[0][self.buscar_vertice(a)].coordenada
                 camino1.append(coordenada)
                 a = output1[0][self.buscar_vertice(coordenada)].coordenada
-            except:
+            except AttributeError:
                 break
         a = destino
         while a:
@@ -233,7 +226,7 @@ class Grafo:
                 coordenada = output2[0][self.buscar_vertice(a)].coordenada
                 camino2.append(coordenada)
                 a = output2[0][self.buscar_vertice(coordenada)].coordenada
-            except:
+            except AttributeError:
                 break
         a = destino
         while a:
@@ -242,9 +235,8 @@ class Grafo:
                 coordenada = output3[0][self.buscar_vertice(a)].coordenada
                 camino3.append(coordenada)
                 a = output3[0][self.buscar_vertice(coordenada)].coordenada
-            except:
+            except AttributeError:
                 break
-
         camino1 = camino1[1:]
         camino2 = camino2[1:]
         camino3 = camino3[1:]
@@ -264,21 +256,36 @@ class Grafo:
         string2 = "Camino Euclides: "
         string3 = "Camino Chebyshev: "
         if lista1:
+            lista11 = []
             for tupla in lista1:
+                t1 = tupla[0]
+                t2 = tupla[1]
+                lista11.append((t2, t1))
+            for tupla in reversed(lista11):
                 string1 += str(tupla) + ", "
             string1 += "costo " + str(costo1)
             print(string1)
         else:
             print("Esta heuristica es inadmisible para este problema")
         if lista2:
+            lista21 = []
             for tupla in lista2:
+                t1 = tupla[0]
+                t2 = tupla[1]
+                lista21.append((t2, t1))
+            for tupla in reversed(lista21):
                 string2 += str(tupla) + ", "
             string2 += "costo " + str(costo2)
             print(string2)
         else:
             print("Esta heuristica es inadmisible para este problema")
         if lista3:
+            lista31 = []
             for tupla in lista3:
+                t1 = tupla[0]
+                t2 = tupla[1]
+                lista31.append((t2, t1))
+            for tupla in reversed(lista31):
                 string3 += str(tupla) + ", "
             string3 += "costo " + str(costo3)
             print(string3)
@@ -298,7 +305,7 @@ class Grafo:
     def obstaculo_cercano(self, coordenada_origen, lista=[], visitados=set()):
         # ese paso es para inicializar el algoritmo
         if len(lista) == 0 and len(visitados) == 0:
-            #se busca el vertice de la coordenada de origen
+            # se busca el vertice de la coordenada de origen
             vertice = self.buscar_vertice(coordenada_origen)
             # nodos vecinos al nodo que nos encontramos
             vecinos = vertice.vecinos
@@ -342,7 +349,8 @@ class Grafo:
                 return self.obstaculo_cercano(coordenada_origen, lista2, visitados)
             else:
                 return None
-        else:  # caso en el que se recorre todo porque estarian todos en visitados y lista no tendría mas nodos
+        # caso en el que se recorretodo porque estarian todos en visitados y lista no tendría mas nodos
+        else:
             return None
 
     def obstaculo(self):
@@ -373,8 +381,8 @@ class Grafo:
         print("\n")
 
     def ruta_corta(self, coordenada_origen, coordenada_destino, lista=[], visitados=set()):
-        #funciona igual que el de obstaculo
-        #pero se busca la coordenada de destino
+        # funciona igual que el de obstaculo
+        # pero se busca la coordenada de destino
         if len(lista) == 0 and len(visitados) == 0:
             vertice = self.buscar_vertice(coordenada_origen)
             vecinos = vertice.vecinos
@@ -398,7 +406,8 @@ class Grafo:
                 for v in vecinos:
                     if v is not None and v.coordenada not in visitados and isinstance(v, Espacio):
                         if v.coordenada == coordenada_destino:
-                            return [vertice.coordenada, coordenada_destino]  # entrega el destino y el último vertice antes de llegar a él
+                            # entrega el destino y el último vertice antes de llegar a él
+                            return [vertice.coordenada, coordenada_destino]
                         else:
                             if v.coordenada not in visitados and v.coordenada not in lista:
                                 lista2.append(v.coordenada)
@@ -407,7 +416,6 @@ class Grafo:
                 return self.ruta_corta(coordenada_origen, coordenada_destino, lista2, visitados)
             else:
                 return None
-
         else:
             return None
 
