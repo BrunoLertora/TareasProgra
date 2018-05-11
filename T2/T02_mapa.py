@@ -242,24 +242,34 @@ class Grafo:
             print("Mejor Ruta: " + costos_aux[0][0] + "\n")
 
     def obstaculo_cercano(self, coordenada_origen, lista=[], visitados=set()):
+        # ese paso es para inicializar el algoritmo
         if len(lista) == 0 and len(visitados) == 0:
+            #se busca el vertice de la coordenada de origen
             vertice = self.buscar_vertice(coordenada_origen)
+            # nodos vecinos al nodo que nos encontramos
             vecinos = vertice.vecinos
             for v in vecinos:
                 if v is not None:
-                    if isinstance(v, Obstaculo):
+                    if isinstance(v, Obstaculo):  # encontramos el obstaculo
                         print('El obstaculo más cercano tiene coordenada:')
                         print(v.coordenada)
                         return v
+                    # se agregan a visitados los nodos ya vistos
+                    # lista tiene los nodos que se analizaran a la sgte recursión
                     else:
                         if v.coordenada not in visitados:
                             lista.append(v.coordenada)
             visitados.add(vertice.coordenada)
             if len(lista) > 0:
+                # lista tiene los nodos que se analizaran, todos
+                #  tienen la misma distancia a la coordenada origen
                 return self.obstaculo_cercano(coordenada_origen, lista, visitados)
             else:
                 return None
         elif len(lista) > 0:
+            # se tiene informacion en la lista de los nodos que se van a revisar
+            # y luego se actualizan los visitados
+
             lista2 = []
             for coordenada in lista:
                 vertice = self.buscar_vertice(coordenada)
@@ -278,7 +288,7 @@ class Grafo:
                 return self.obstaculo_cercano(coordenada_origen, lista2, visitados)
             else:
                 return None
-        else:
+        else:  # caso en el que se recorre todo porque estarian todos en visitados y lista no tendría mas nodos
             return None
 
     def obstaculo(self):
@@ -309,6 +319,8 @@ class Grafo:
         print("\n")
 
     def ruta_corta(self, coordenada_origen, coordenada_destino, lista=[], visitados=set()):
+        #funciona igual que el de obstaculo
+        #pero se busca la coordenada de destino
         if len(lista) == 0 and len(visitados) == 0:
             vertice = self.buscar_vertice(coordenada_origen)
             vecinos = vertice.vecinos
@@ -332,7 +344,7 @@ class Grafo:
                 for v in vecinos:
                     if v is not None and v.coordenada not in visitados and isinstance(v, Espacio):
                         if v.coordenada == coordenada_destino:
-                            return [vertice.coordenada, coordenada_destino]
+                            return [vertice.coordenada, coordenada_destino]  # entrega el destino y el último vertice antes de llegar a él
                         else:
                             if v.coordenada not in visitados and v.coordenada not in lista:
                                 lista2.append(v.coordenada)
