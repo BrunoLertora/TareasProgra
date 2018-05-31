@@ -110,5 +110,60 @@ class Sistema:
         self.connection.commit()
 
 
+    def tiempo_invertido(self, k): #No esta listo
+        print(self.usuario)
+        cursor = self.connection.cursor()
+        cursor.execute("SELECT C.Duracion, R.R_ID FROM Canciones C, Reproducciones R, Usuarios U WHERE C.C_ID = R.Cancion AND R.Usuario = U.U_ID AND U.Usuario = ? ORDER BY R.R_ID DESC",[self.usuario])
+        tabla = cursor.fetchall()
+        print(tabla)
+
+
+    def busqueda_amigos(self, k):
+        cursor = self.connection.cursor()
+        info = {}
+        cursor.execute("SELECT U.Usuario FROM Usuarios U")
+        usuarios = cursor.fetchall()
+        for usuario in usuarios:
+            info[usuario[0]] = []
+
+        for usuario in info.keys():
+            cursor.execute("SELECT DISTINCT C.C_ID FROM Canciones C, Reproducciones R, Usuarios U WHERE C.C_ID = R.Cancion AND R.Usuario = U.U_ID AND U.Usuario = ?",[usuario])
+            canciones = cursor.fetchall()
+            info[usuario].append(canciones)
+            cursor.execute("SELECT DISTINCT C.Artista FROM Canciones C, Reproducciones R, Usuarios U WHERE C.C_ID = R.Cancion AND R.Usuario = U.U_ID AND U.Usuario = ?",[usuario])
+            artistas = cursor.fetchall()
+            info[usuario].append(artistas)
+            cursor.execute("SELECT DISTINCT G.Genero FROM Canciones C, Reproducciones R, Usuarios U, Generos G WHERE C.C_ID = R.Cancion AND R.Usuario = U.U_ID AND U.Usuario = ? and C.Artista = G.Artista",[usuario])
+            generos = cursor.fetchall()
+            info[usuario].append(generos)
+            info[usuario].append(0)
+        output = []
+        for usuario_aux, datos in info.items():
+            if usuario_aux != self.usuario:
+                puntaje = 0
+                for cancion in info[self.usuario][0]:
+                    if cancion in info[usuario_aux][0]:
+                        puntaje += 1.5
+
+                for artista in info[self.usuario][1]:
+                    if artista in info[usuario_aux][1]:
+                        puntaje += 1
+
+                for genero in info[self.usuario][2]:
+                    if genero in info[usuario_aux][2]:
+                        puntaje += 0.5
+
+                output.append((usuario_aux,puntaje))
+
+        output = sorted(output, key=lambda tup: tup[1], reverse=True)
+
+        if k > len(output):
+            for usuario in output:
+                print(usuario[0], usuario[1])
+        else:
+            for usuario in output[0:k]:
+                print(usuario[0], usuario[1])
+
+
 sistema = Sistema()
 # sistema.inicializar()
