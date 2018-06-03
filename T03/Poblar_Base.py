@@ -54,6 +54,7 @@ with open('usuarios.csv', "w", encoding='utf8') as csv_file:
         writer = csv.writer(csv_file, delimiter=',')
         for line in [usuario1, usuario2, usuario3, usuario4, usuario5]:
             writer.writerow(line)
+
 # Creacion archivo reproduccion
 reproducciones1 = [reprod1_1, reprod1_2, reprod1_3, reprod1_4]
 reproducciones2 = [reprod2_1, reprod2_2, reprod2_3, reprod2_4]

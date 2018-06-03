@@ -14,8 +14,9 @@ class Sistema:
         cursor.execute("CREATE TABLE Usuarios(U_ID INTEGER, Usuario TEXT, Contrasena TEXT, UNIQUE(Usuario), "
                        "PRIMARY KEY(U_ID))")
         cursor.execute("CREATE TABLE Canciones(C_ID INTEGER, Artista TEXT, Album TEXT, Track TEXT, Duracion FLOAT, "
-                       "PRIMARY KEY(C_ID))")
-        cursor.execute("CREATE TABLE Generos(G_ID INTEGER, Artista TEXT, Genero TEXT, UNIQUE(Genero) PRIMARY KEY(G_ID))")
+                       "UNIQUE(Artista, Album, Track, Duracion) PRIMARY KEY(C_ID))")
+        cursor.execute("CREATE TABLE Generos(G_ID INTEGER, Artista TEXT, Genero TEXT, UNIQUE(Artista, Genero) "
+                       "PRIMARY KEY(G_ID))")
         cursor.execute("CREATE TABLE Reproducciones(R_ID INTEGER, Usuario INTEGER, Cancion INTEGER, Fecha TEXT, "
                        "PRIMARY KEY(R_ID),FOREIGN KEY (Usuario) REFERENCES Usuarios,FOREIGN KEY (Cancion) REFERENCES "
                        "Canciones)")
@@ -93,18 +94,21 @@ class Sistema:
         self.connection.commit()
         return None
 
-    def escuchar(self, cancion):
+    def escuchar(self, artista, album, track, duracion):
         cursor = self.connection.cursor()
         cursor.execute("SELECT MAX(R_ID) FROM Reproducciones R")
         id1 = int(cursor.fetchone()[0]) + 1
-        cursor.execute("SELECT C.C_ID FROM Canciones C WHERE C.Track = ?", [cancion])
+        cursor.execute("SELECT C.C_ID FROM CANCIONES C WHERE C.Artista = ? AND C.Album = ? "
+                       "AND C.Track = ? AND C.Duracion = ?", [artista, album, track, duracion])
         id_cancion = int(cursor.fetchone()[0])
         fecha = str(datetime.datetime.now()).split(' ')
         hora = fecha[1].split('.')[0].split(':')
         hora = hora[0] + ':' + hora[1]
         fecha_auxiliar = fecha[0].split('-')
         fecha = fecha_auxiliar[2] + '-' + fecha_auxiliar[1] + '-' + fecha_auxiliar[0] + '-' + hora
-        cursor.execute("INSERT INTO Reproducciones VALUES (?,?,?,?)", [id1, self.usuario, id_cancion, fecha])
+        cursor.execute("SELECT U.U_ID FROM Usuarios U WHERE U.usuario = ?", [self.usuario])
+        usuario = int(cursor.fetchone()[0])
+        cursor.execute("INSERT INTO Reproducciones VALUES (?,?,?,?)", [id1, usuario, id_cancion, fecha])
         self.connection.commit()
 
     def modificar_cancion(self, artista1, album1, track1, duracion1, artista2, album2, track2, duracion2):
@@ -119,10 +123,14 @@ class Sistema:
         cursor.execute("SELECT C.Artista, count(C.Artista) FROM Canciones C, Reproducciones R, Usuarios U WHERE "
                        "C.C_ID = R.Cancion AND R.Usuario = U.U_ID AND U.Usuario = ? GROUP BY C.Artista ORDER BY "
                        "count(C.Artista) LIMIT 1", [self.usuario])
-        a_mas_escuchado = cursor.fetchall()[0][0]
-        cursor.execute("SELECT G.Genero FROM Generos G WHERE G.Artista = ?", [a_mas_escuchado])
-        tabla = cursor.fetchall()
-        print("Los generos del artista más escuchado son: {}".format(tabla))
+        try:
+            a_mas_escuchado = cursor.fetchall()[0][0]
+            cursor.execute("SELECT G.Genero FROM Generos G WHERE G.Artista = ?", [a_mas_escuchado])
+            tabla = cursor.fetchall()
+            print("Los generos del artista más escuchado son: {}".format(tabla))
+        except IndexError:
+            print("No existe un artista escuchado")
+        print("")
         self.connection.commit()
 
     def tiempo_invertido(self, k):
@@ -130,8 +138,12 @@ class Sistema:
         cursor.execute("SELECT SUM(C.Duracion) FROM Canciones C, Reproducciones R, Usuarios U WHERE C.C_ID = "
                        "R.Cancion AND R.Usuario = U.U_ID AND U.Usuario = ? ORDER BY datetime(R.Fecha) DESC LIMIT ?",
                        [self.usuario, k])
-        tabla = cursor.fetchall()[0][0]
-        print("Se invirtieron: {} minutos en las últimas {} canciones".format(tabla, k))
+        try:
+            tabla = cursor.fetchall()[0][0]
+            print("Se invirtieron {} minutos en las últimas {} canciones".format(tabla, k))
+        except IndexError:
+            print("Se invirtieron 0 minutos en las últimas {} canciones".format(k))
+        print("")
         self.connection.commit()
 
     def busqueda_amigos(self, k):
@@ -183,50 +195,53 @@ class Sistema:
         else:
             for usuario in output[0:k]:
                 print(usuario[0], usuario[1])
+        print("")
 
     def eliminar_usuario(self):
         cursor = self.connection.cursor()
-        cursor.execute("DELETE FROM Reproducciones WHERE R.Usuario = U.U_ID AND U.Usuario = ?", [self.usuario])
+        cursor.execute("SELECT U.U_ID FROM Usuarios U WHERE U.usuario = ?", [self.usuario])
+        usuario = int(cursor.fetchone()[0])
+        cursor.execute("DELETE FROM Reproducciones WHERE Usuario = ?", [usuario])
         cursor.execute("DELETE FROM Usuarios WHERE Usuario = ?", [self.usuario])
         self.connection.commit()
 
 
-
 sistema = Sistema()
 # sistema.inicializar()
-i1, i2, i3 = 1, 1, 1
+i1 = 1
 
 while i1 == 1:
+    i2, i3, i4 = 1, 1, 1
     sistema = Sistema()
-    print("\n")
+    print("")
     print("Hola, ¿qué quieres hacer?: ")
     print("1) Ingresar a mi cuenta")
     print("2) Crear un usuario")
     a1 = (input("Ingrese opción: "))
-    print("\n")
-    if int(a1) == 1:
+    print("")
+    if a1 == "1":
         while i2 == 1:
             print("Ingrese su usuario y contraseña")
             user = input("Usuario: ")
             password = input("Constraseña: ")
-            print("\n")
+            print("")
             connect = sqlite3.connect('T03.db')
             cur = connect.cursor()
             cur.execute("SELECT U.U_ID FROM Usuarios U WHERE U.Usuario = ?", [user])
             verificacion1 = cur.fetchall()
             if len(verificacion1) == 0:
                 print("Usuario ingresado no existe en la base de datos. Inténtelo de nuevo")
-                print("\n")
+                print("")
             else:
-                sistema = Sistema(user)
                 cur.execute("SELECT U.U_ID FROM Usuarios U WHERE U.Usuario = ? AND U.Contrasena = ?", [user, password])
                 verificacion2 = cur.fetchone()
                 if verificacion2:
+                    sistema = Sistema(user)
                     while i3 == 1:
                         print("Hola {}! que consulta deseas realizar hoy:".format(user))
                         print("0) Cerrar Sesión")
                         print("1) Agregar una nueva canción")
-                        print("2) Agregar un nuevo género")
+                        print("2) Agregar un nuevo género a un artista nuevo o ya creado ")
                         print("3) Escuchar una canción")
                         print("4) Modificar datos de una canción")
                         print("5) Solicitar los géneros más repetidos entre los artistas más escuchados")
@@ -234,53 +249,132 @@ while i1 == 1:
                         print("7) Buscar Amiguitos")
                         print("8) Eliminar mi cuenta de usuario")
                         a2 = input("Ingrese opción: ")
-                        if int(a2) == 0:
+                        print("")
+                        if a2 == "0":
                             i3 = 0
                             i2 = 0
-                        elif int(a2) == 1:
+                            sistema = Sistema()
+                        elif a2 == "1":
+                            connect = sqlite3.connect('T03.db')
+                            cur = connect.cursor()
+                            track = input("Ingrese el nombre de la canción: ")
+                            artista = input("Ingrese el nombre de artista de la canción: ")
+                            cur.execute("SELECT G.Artista FROM Generos G WHERE G.Artista = ?", [artista])
+                            verificacion4 = cur.fetchone()
+                            if not verificacion4:
+                                print("Debe agregar el artista y su(s) género(s) con la consulta N°2 antes de agregar"
+                                      " canciones correspondientes a este artista")
+                                print("")
+                            else:
+                                album = input("Ingrese el nombre del album de la canción: ")
+                                duracion = input("Ingrese duración de la canción: ")
+                                cur.execute("SELECT C.C_ID FROM CANCIONES C WHERE C.Artista = ? AND C.Album = ? "
+                                            "AND C.Track = ? AND C.Duracion = ?", [artista, album, track, duracion])
+                                verificacion5 = cur.fetchone()
+                                if verificacion5:
+                                    print("Esta canción ya está en la base de datos")
+                                    print("")
+                                else:
+                                    sistema.agregar_cancion(artista, album, track, duracion)
+                                    connect.commit()
+                                    print("Canción agregada correctamente")
+                                    print("")
+                        elif a2 == "2":
+                            connect = sqlite3.connect('T03.db')
+                            cur = connect.cursor()
+                            genero = input("Ingrese el nombre del género musical: ")
+                            artista = input("Ingrese el nombre del artista al que le quiere asignar el género: ")
+                            sistema.agregar_genero(artista, genero)
+                            connect.commit()
+                            print("Genero agregado correctamente, si desea agregar más generos a este artista vuelva a"
+                                  " realizar la consulta N°2")
+                            print("")
+                        elif a2 == "3":
+                            connect = sqlite3.connect('T03.db')
+                            cur = connect.cursor()
                             track = input("Ingrese el nombre de la canción: ")
                             artista = input("Ingrese el nombre de artista de la canción: ")
                             album = input("Ingrese el nombre del album de la canción: ")
                             duracion = input("Ingrese duración de la canción: ")
-                            sistema.agregar_cancion(artista, album, track, duracion)
-                        elif int(a2) == 2:
-                            genero = input("Ingrese el nombre del género musical: ")
-                            artista = input("Ingrese el nombre del artista al que le quiere asignar el género: ")
-                            sistema.agregar_genero(artista, genero)
-                        elif int(a2) == 3:
-                            track = input("Ingrese el nombre de la canción: ")
-                            sistema.escuchar(track)
-                        elif int(a2) == 4:
+                            cur.execute("SELECT C.C_ID FROM CANCIONES C WHERE Artista = ? AND Album = ? "
+                                        "AND Track = ? AND Duracion = ?", [artista, album, track, duracion])
+                            verificacion5 = cur.fetchone()
+                            if not verificacion5:
+                                print("Esta canción no está en la base de datos, agreguela con la consulta N°1 antes de"
+                                      " escucharla")
+                                print("")
+                            else:
+                                sistema.escuchar(artista, album, track, duracion)
+                                connect.commit()
+                                print("Canción escuchada!")
+                                print("")
+                        elif a2 == "4":
+                            connect = sqlite3.connect('T03.db')
+                            cur = connect.cursor()
                             track1 = input("Ingrese el nombre de la canción: ")
                             artista1 = input("Ingrese el nombre de artista de la canción: ")
                             album1 = input("Ingrese el nombre del album de la canción: ")
                             duracion1 = input("Ingrese duración de la canción: ")
-                            track2 = input("Ingrese el nombre con el que quiere que quede la canción: ")
-                            artista2 = input("Ingrese el nombre de artista con el que quiere que quede la canción: ")
-                            album2 = input("Ingrese el nombre del album con el que quiere que quede la canción: ")
-                            duracion2 = input("Ingrese la duración con la que quiere que quede la canción: ")
-                            sistema.modificar_cancion(artista2, album2, track2, duracion2, artista1, album1, track1,
-                                                      duracion1)
-                        elif int(a2) == 5:
+                            cur.execute("SELECT C.C_ID FROM CANCIONES C WHERE Artista = ? AND Album = ? "
+                                        "AND Track = ? AND Duracion = ?", [artista1, album1, track1, duracion1])
+                            verificacion6 = cur.fetchone()
+                            if not verificacion6:
+                                print("Esta canción no está en la base de datos, puede agregarla con la consulta N°1")
+                                print("")
+                            else:
+                                track2 = input("Ingrese el nombre con el que quiere que quede la canción: ")
+                                artista2 = input("Ingrese el nombre de artista con el que quiere que quede la"
+                                                 " canción: ")
+                                album2 = input("Ingrese el nombre del album con el que quiere que quede la canción: ")
+                                duracion2 = input("Ingrese la duración con la que quiere que quede la canción: ")
+                                cur.execute("SELECT G.Artista FROM Generos G WHERE G.Artista = ?", [artista2])
+                                verificacion7 = cur.fetchone()
+                                if not verificacion7:
+                                    print(
+                                        "Debe agregar el artista y su(s) género(s) con la consulta N°2 antes de agregar"
+                                        " canciones correspondientes a este artista")
+                                    print("")
+                                else:
+                                    sistema.modificar_cancion(artista2, album2, track2, duracion2, artista1, album1,
+                                                              track1, duracion1)
+                                    connect.commit()
+                                    print("Canción modificada correctamente")
+                                    print("")
+                        elif a2 == "5":
                             sistema.generos_repetidos()
-                        elif int(a2) == 6:
+                        elif a2 == "6":
                             m = int(input("Ingrese el numero de canciones que quiere consultar: "))
                             sistema.tiempo_invertido(m)
-                        elif int(a2) == 7:
+                        elif a2 == "7":
                             m = int(input("Ingrese el número de amiguitos mas cercanos que quiere buscar: "))
                             sistema.busqueda_amigos(m)
-                        elif int(a2) == 8:
+                        elif a2 == "8":
                             sistema.eliminar_usuario()
+                            connect.commit()
+                            i3 = 0
+                            i2 = 0
+                            print("Usuario eliminado corretamente")
+                            print("")
                         else:
                             print("Ingrese un número de la lista de opciones")
                 else:
                     print("Contraseña incorrecta. Inténtelo de nuevo")
-    elif a1 == 2:
-        print("Ingrese su usuario y contraseña")
-        user = input("Usuario: ")
-        password = input("Constraseña: ")
-        sistema.agregar_usuario(user, password)
-        sistema = Sistema(user)
-
+    elif a1 == "2":
+        while i4 == 1:
+            print("Ingrese su usuario y contraseña")
+            user = input("Usuario: ")
+            password = input("Constraseña: ")
+            connect = sqlite3.connect('T03.db')
+            cur = connect.cursor()
+            cur.execute("SELECT U.U_ID FROM Usuarios U WHERE U.Usuario = ?", [user])
+            verificacion3 = cur.fetchone()
+            if verificacion3:
+                print("Nombre de usuario ingresado ya existe en la base de datos. Inténtelo de nuevo")
+                print("")
+            else:
+                sistema.agregar_usuario(user, password)
+                i4 = 0
+                print("Usuario creado correctamente!")
+                print("")
     else:
         print("Ingrese un número de la lista de opciones")
